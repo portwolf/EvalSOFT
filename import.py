@@ -21,4 +21,4 @@ AnzWK = input('Anzahl der Waelzkoerper?')
 ##y = [1, 2, 3, 4, 5]
 plt.plot(df, df, 'r--', df, df**2, 'bs', df, df**3, 'g^')
 show()
-
+##### NUR EIN COMMENT

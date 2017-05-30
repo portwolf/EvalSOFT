@@ -12,6 +12,9 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 df = pd.read_excel(open('Profil12.xls', 'rb'), sheetname='Tabelle1')
 print (df.head)
+Fges = input('Gesamtlagerkraft?')
+AnzWK = input('Anzahl der Waelzkoerper?')
+
 
 
 ##x = [1, 2, 3, 4, 5]
