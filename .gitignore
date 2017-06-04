@@ -1,3 +1,4 @@
 *.xls
 .*
-
+.gitignore
+*.*un*
