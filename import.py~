@@ -20,7 +20,7 @@ Emod = (2.08e+05)                                   ### EModul Lagerstahl
 QKZ = 0.3                                           ### Querkontraktionszahl
 WKrad = 11/2                                        ### Waelzkoerperdurchmesser
 WKlen = 10.6                                        ### Waelzkoerperlaenge
-rho = (1/(WKrad))                                   ### Konstante nach HERTZ
+rho = (1/(WKrad))                                 ### Konstante nach HERTZ
 l = 10.6/1000
 Fges = int(input('Gesamtlagerkraft? (In [kN]) '))   ### Lagergesamtlast
 AnzWK = int(input('Anzahl der Waelzkoerper? '))     ### Anzahl der Waelzkoerper im Lager
@@ -40,7 +40,6 @@ GFkt = np.zeros((1000, 1000))
 
 ### Schleife um GFkt zu fuellen
 ####i = 1#####
-
 ### Einlesen der Messdaten
 df = pd.read_excel(open('Profil12.xls', 'rb'), sheetname='Tabelle1')
 ###print (df)
