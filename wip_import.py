@@ -37,22 +37,45 @@ P0 = round((2*FWK)/(pi*B*WKLEN), 2)
 print('Die maximal Pressung im Kontakt betraegt: '+str(P0)+' N/mm^2')
 
 ### Initialisiere Gewichtungsfunktion Matrix
-GFkt = np.zeros((1000, 1000))
+GFKT = np.zeros((1000, 1000))
 
-### Schleife um GFkt zu fuellen
+### Schleife um GFKT zu fuellen
 ####i = 1#####
 
 ### Einlesen der Messdaten
 DFREAD = pd.read_excel(open('Profil12.xls', 'rb'), sheetname='Tabelle1')
 DF = DFREAD.as_matrix()
 
-###print (DF)
+### Gewichtungsfunktionmatrix füllen (Abstände berechnen, reale)
 for i in range(len(DF)):
 
     for j in range(len(DF)):
-        GFkt[i, j] = abs((DF[i, 0] - DF[j, 0]))
-###        print(GFkt[i,j])
+        GFKT[i, j] = abs((DF[i, 0] - DF[j, 0]))
+###        print(GFKT[i,j])
 ###    print(i)
+
+### Gewichtungsfunktionmatrix füllen (Abstände berechnen, reale)
+GFKT2 = np.zeros((1000, 1000))
+for i in range(len(DF)):
+
+    for j in range(len(DF)):
+        GFKT2[i, j] = abs(j-i)*l
+###        print(GFKT[i,j])
+###    print(i)
+
+### Faktoren K1/K2 bestimmen
+X0=np.linspace(1e-10, 2e-4, num=1000)
+Y0 = 2*X0*np.log10((np.e**(-1/(2*(1-0.3))))/X0)
+n=1000
+LOG_K11=(sum(np.log10(X0))*sum((np.log10(Y0))**2)-sum(np.log10(Y0))*sum(log10(X0)*np.log10(Y0)))
+LOG_K12=n*np.sum((log10(Y0))**2-(sum(log10(Y0)))**2)
+
+LOG_K1=LOG_K11/LOG_K12
+K1=10**LOG_K1
+
+LOG_K21=(n*(sum(np.log10(X0))*sum((np.log10(Y0))))-sum(np.log10(Y0))*sum(log10(X0)))
+K2=LOG_K21/LOG_K12
+
 
 ### Graphdefinitionen
 plt.plot(DF, DF, 'r--', DF, DF**2, 'bs', DF, DF**3, 'g^')
