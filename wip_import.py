@@ -64,18 +64,28 @@ for i in range(len(DF)):
 ###    print(i)
 
 ### Faktoren K1/K2 bestimmen
-X0=np.linspace(1e-10, 2e-4, num=1000)
+X0 = np.linspace(1e-10, 2e-4, num=1000)
 Y0 = 2*X0*np.log10((np.e**(-1/(2*(1-0.3))))/X0)
-n=1000
-LOG_K11=(sum(np.log10(X0))*sum((np.log10(Y0))**2)-sum(np.log10(Y0))*sum(log10(X0)*np.log10(Y0)))
-LOG_K12=n*np.sum((log10(Y0))**2-(sum(log10(Y0)))**2)
+N = 1000
+LOG_K11 = (sum(np.log10(X0))*sum((np.log10(Y0))**2)-sum(np.log10(Y0))*sum(log10(X0)*np.log10(Y0)))
+LOG_K12 = N*np.sum((log10(Y0))**2-(sum(log10(Y0)))**2)
 
-LOG_K1=LOG_K11/LOG_K12
-K1=10**LOG_K1
+LOG_K1 = LOG_K11/LOG_K12
+K1 = 10**LOG_K1
 
-LOG_K21=(n*(sum(np.log10(X0))*sum((np.log10(Y0))))-sum(np.log10(Y0))*sum(log10(X0)))
-K2=LOG_K21/LOG_K12
+LOG_K21 = (N*(sum(np.log10(X0))*sum((np.log10(Y0))))-sum(np.log10(Y0))*sum(log10(X0)))
+K2 = LOG_K21/LOG_K12
 
+### Gewichtungsfunktionmatrix für j=k und j!=k erzeugen
+GFKT3 = np.zeros((1000, 1000))
+for i in range(len(GFKT)):
+    for j in range(len(GFKT)):
+        if GFKT3[i , j] > 0:
+            GFKT3[i , j] = (1/GFKT[i,j])**K2
+        elif GFKT3[i , j] < 0:
+            GFKT3[i , j] = (1/GFKT[i,j])**K2
+        elif GFKT3[i , j] == 0:
+            GFKT3[i , j] = (4/l)**K2
 
 ### Graphdefinitionen
 plt.plot(DF, DF, 'r--', DF, DF**2, 'bs', DF, DF**3, 'g^')
