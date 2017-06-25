@@ -81,9 +81,9 @@ GFKT3 = np.zeros((1000, 1000))
 for i in range(len(GFKT)):
     for j in range(len(GFKT)):
         if GFKT3[i, j] > 0:
-            GFKT3[i, j] = (1/GFKT[i, j])**K2
+            GFKT3[i, j] = (1/GFKT2[i, j])**K2
         elif GFKT3[i, j] < 0:
-            GFKT3[i, j] = (1/GFKT[i, j])**K2
+            GFKT3[i, j] = (1/GFKT2[i, j])**K2
         elif GFKT3[i, j] == 0:
             GFKT3[i, j] = (4/l)**K2
 
