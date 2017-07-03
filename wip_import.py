@@ -37,10 +37,7 @@ P0 = round((2*FWK)/(pi*B*WKLEN), 2)
 print('Die maximal Pressung im Kontakt betraegt: '+str(P0)+' N/mm^2')
 
 ### Initialisiere Gewichtungsfunktion Matrix
-GFKT = np.zeros((1000, 1000))
-
-### Schleife um GFKT zu fuellen
-####i = 1#####
+GFKT = np.zeros((999, 999))
 
 ### Einlesen der Messdaten
 DFREAD = pd.read_excel(open('Profil12.xls', 'rb'), sheetname='Tabelle1')
@@ -55,7 +52,7 @@ for i in range(len(DF)):
 ###    print(i)
 
 ### Gewichtungsfunktionmatrix füllen (Abstände berechnen, reale)
-GFKT2 = np.zeros((1000, 1000))
+GFKT2 = np.zeros((999, 999))
 for i in range(len(DF)):
 
     for j in range(len(DF)):
@@ -77,15 +74,19 @@ LOG_K21 = (N*(sum(np.log10(X0))*sum((np.log10(Y0))))-sum(np.log10(Y0))*sum(log10
 K2 = LOG_K21/LOG_K12
 
 ### Gewichtungsfunktionmatrix für j=k und j!=k erzeugen
-GFKT3 = np.zeros((1000, 1000))
+GFKT3 = np.zeros((999, 999))
 for i in range(len(GFKT)):
     for j in range(len(GFKT)):
-        if GFKT3[i, j] > 0:
+        if j != i:
+#        if GFKT2[i, j] > 0:
             GFKT3[i, j] = (1/GFKT2[i, j])**K2
-        elif GFKT3[i, j] < 0:
-            GFKT3[i, j] = (1/GFKT2[i, j])**K2
-        elif GFKT3[i, j] == 0:
+#        elif GFKT2[i, j] == 0:
+        elif j == i:
             GFKT3[i, j] = (4/l)**K2
+
+### S_I / S_O berechnen
+
+
 
 ### Graphdefinitionen
 plt.plot(DF, DF, 'r--', DF, DF**2, 'bs', DF, DF**3, 'g^')
