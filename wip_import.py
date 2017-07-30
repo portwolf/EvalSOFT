@@ -1,19 +1,20 @@
 ### Alle benoetigten Bibl. laden
 import math
 import pandas as pd
-import pylab
+### import pylab
+from pylab import figure, show, legend, ylabel
 import numpy as np
-import datetime
-import pandas_datareader.data as web
+#import datetime
+#import pandas_datareader.data as web
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+#from mpl_toolkits.mplot3d import Axes3D
 from pylab import *
 from matplotlib import style
 from sklearn import datasets, linear_model
 ### Erzeuge Graphvorlage
-style.use('ggplot')
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+##style.use('ggplot')
+##FIGURE = plt.figure()
+##AX = FIGURE.add_subplot(111, projection='3d')
 
 ### Definition verwendeter Konstanten
 EMOD = (2.08e+05)                                   ### EModul Lagerstahl
@@ -21,7 +22,8 @@ QKZ = 0.3                                           ### Querkontraktionszahl
 WKRAD = 11/2                                        ### Waelzkoerperdurchmesser
 WKLEN = 10.6                                        ### Waelzkoerperlaenge
 RHO = (1/(WKRAD))                                   ### Konstante nach HERTZ
-l = 10.6/1000
+###l = 10.6/1000
+l = 10.6
 FGES = int(input('Gesamtlagerkraft? (In [kN]) '))   ### Lagergesamtlast
 ANZWK = int(input('Anzahl der Waelzkoerper? '))     ### Anzahl der Waelzkoerper im Lager
 FWK = round(((FGES*1000)/ANZWK), 2)                 ### Last auf einzelnen WK
@@ -48,7 +50,7 @@ for i in range(len(DF)):
 
     for j in range(len(DF)):
         GFKT[i, j] = abs((DF[i, 0] - DF[j, 0]))
-###        print(GFKT[i,j])
+###        print(GFKT[i, j])
 ###    print(i)
 
 ### Gewichtungsfunktionmatrix füllen (Abstände berechnen, reale)
@@ -57,22 +59,25 @@ for i in range(len(DF)):
 
     for j in range(len(DF)):
         GFKT2[i, j] = abs(j-i)*l
-###        print(GFKT[i,j])
+###        print(GFKT[i, j])
 ###    print(i)
 
-### Faktoren K1/K2 bestimmen
-X0 = np.linspace(1e-10, 2e-4, num=1000)
-Y0 = 2*X0*np.log10((np.e**(-1/(2*(1-0.3))))/X0)
+###### Faktoren K1/K2 bestimmen
+###X0 = np.linspace(1e-10, 2e-4, num=1000)
+#### pylint: disable=no-name-in-module
+###Y0 = 2*X0*np.log10((np.e**(-1/(2*(1-0.3))))/X0)
+#### pylint: enable=no-name-in-module
+###N = 1000
+###LOG_K11 = (sum(np.log10(X0))*sum((np.log10(Y0))**2)-sum(np.log10(Y0))*sum(log10(X0)*np.log10(Y0)))
+###LOG_K12 = N*np.sum((log10(Y0))**2-(sum(log10(Y0)))**2)
+###
+###LOG_K1 = LOG_K11/LOG_K12
+###K1 = 10**LOG_K1
+###
+###LOG_K21 = (N*(sum(np.log10(X0))*sum((np.log10(Y0))))-sum(np.log10(Y0))*sum(log10(X0)))
+###K2 = LOG_K21/LOG_K12
+K2 = 1 / 0.92
 N = 1000
-LOG_K11 = (sum(np.log10(X0))*sum((np.log10(Y0))**2)-sum(np.log10(Y0))*sum(log10(X0)*np.log10(Y0)))
-LOG_K12 = N*np.sum((log10(Y0))**2-(sum(log10(Y0)))**2)
-
-LOG_K1 = LOG_K11/LOG_K12
-K1 = 10**LOG_K1
-
-LOG_K21 = (N*(sum(np.log10(X0))*sum((np.log10(Y0))))-sum(np.log10(Y0))*sum(log10(X0)))
-K2 = LOG_K21/LOG_K12
-
 ### Gewichtungsfunktionmatrix für j=k und j!=k erzeugen
 GFKT3 = np.zeros((999, 999))
 for i in range(len(GFKT)):
@@ -81,13 +86,51 @@ for i in range(len(GFKT)):
 #        if GFKT2[i, j] > 0:
             GFKT3[i, j] = (1/GFKT2[i, j])**K2
 #        elif GFKT2[i, j] == 0:
-        elif j == i:
+#        elif j == i:
+        else:
             GFKT3[i, j] = (4/l)**K2
 
-### S_I / S_O berechnen
+### S_I berechnen (S_0 irrelevant, Axiallager). Aus Alternative Slicing Technique.. (Teutsch)
+C_I = 3.17*(WKRAD)**0.08*((1-QKZ**2)/EMOD)
+S_I = C_I**K2 / (l/N)
+GFKT4 = np.zeros((999, 999))
+GFKT4 = (N/sum(GFKT3))*S_I*GFKT3
 
+### DELTA_RP berechnen. Einfederung einer Rolle auf einer Scheibe (Startwert für spätere Iteration?)
+DELTA_RP = 2.66*(7**0.09) * (FWK*(1-0.3**2)/(2.08*10**5*10.6)**0.91)
+DELTA_RP2 = [DELTA_RP] * 999
+Q_I = np.zeros(999)
+### Lin. Gl. Sys loesen und einzelne Scheibenkraefte berechnen
+### Iteration von DELTA_RP (absenken der Einfederung Delta bis Integral der Kräfte der Scheiben der WK Einzelkraft entspricht
 
-
-### Graphdefinitionen
-plt.plot(DF, DF, 'r--', DF, DF**2, 'bs', DF, DF**3, 'g^')
-## show()
+DELTA_RP3 = linspace(max(DELTA_RP2), 0, num=500)
+for j in DELTA_RP3:
+    DELTA_RP2 = [j]*999
+    print(np.trapz(Q_I)/FWK)
+    Q_I = np.linalg.solve(GFKT4, DELTA_RP2)
+    if np.trapz(Q_I)/FWK <= 1.01 and np.trapz(Q_I)/FWK >= 0.09:
+        break
+### Berechnen der realen Flaechenpressung einer einzelnen Scheibe
+SCH_PRESSUNG = Q_I/(2*B*(l/N)
+### Graphen
+###FIGURE = plt.figure()
+### ax1 = FIGURE.add_subplot(111)
+### line = ax1.plot(Q_I, 'xr-', DF[:, 1], 'r--')
+### ylabel("Kraft auf eine Scheibe")
+### ax2 = FIGURE.add_subplot(111, share=ax1, frameon=FALSE)
+### line2 = ax2.plot(SCH_PRESSUNG, 'g--')
+### ax2.yaxis.tick_right()
+### ax2.yaxis.set_label_position("right")
+### ylabel("Flaechenpressung einer Scheibe")
+### legend((line1, line2), ("Kraft / Verschleiss", "Flaechenpressung"))
+### show()
+### ax = plt.gca()
+### ax2 = ax.twinx()
+### ax2.set_ylabel("Flaechenpressung", color='blue')
+### ax.set_ylim(ymax=0.004)
+### ax.set_ylabel("Kraft / Verschleissprofil", color='red')
+### ax.plot(Q_I, 'r--', DF[:, 1], 'g--')
+### ax2.plot(SCH_PRESSUNG, 'b--')
+### show()
+###plt.plot(DF, DF, 'r--', DF, DF**2, 'bs', DF, DF**3, 'g^')
+### show()
