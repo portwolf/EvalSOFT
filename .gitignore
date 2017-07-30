@@ -40,6 +40,6 @@ wip_*
 .Trashes
 thumbs.db
 Thumbs.db
-__pycache__/*
+__pycache__
 *.pyc
-
+*.*~

@@ -108,16 +108,16 @@ for j in DELTA_RP3:
     DELTA_RP2 = [j]*999
     print(np.trapz(Q_I)/FWK)
     Q_I = np.linalg.solve(GFKT4, DELTA_RP2)
-    if np.trapz(Q_I)/FWK <= 1.01 and np.trapz(Q_I)/FWK >= 0.09:
+    if np.trapz(Q_I)/FWK <= 1.01 and np.trapz(Q_I)/FWK >= 0.99:
         break
 ### Berechnen der realen Flaechenpressung einer einzelnen Scheibe
-SCH_PRESSUNG = Q_I/(2*B*(l/N)
+SCH_PRESSUNG = Q_I/(2*B*(l/N))
 ### Graphen
-###FIGURE = plt.figure()
+### FIGURE = plt.figure()
 ### ax1 = FIGURE.add_subplot(111)
 ### line = ax1.plot(Q_I, 'xr-', DF[:, 1], 'r--')
 ### ylabel("Kraft auf eine Scheibe")
-### ax2 = FIGURE.add_subplot(111, share=ax1, frameon=FALSE)
+### ax2 = FIGURE.add_subplot(111, share=ax1, frameon=false)
 ### line2 = ax2.plot(SCH_PRESSUNG, 'g--')
 ### ax2.yaxis.tick_right()
 ### ax2.yaxis.set_label_position("right")
