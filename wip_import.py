@@ -103,34 +103,59 @@ Q_I = np.zeros(999)
 ### Lin. Gl. Sys loesen und einzelne Scheibenkraefte berechnen
 ### Iteration von DELTA_RP (absenken der Einfederung Delta bis Integral der Kräfte der Scheiben der WK Einzelkraft entspricht
 
-DELTA_RP3 = linspace(max(DELTA_RP2), 0, num=500)
-for j in DELTA_RP3:
-    DELTA_RP2 = [j]*999
-    print(np.trapz(Q_I)/FWK)
+DELTA_RP3 = linspace(max(DELTA_RP2), 0, num=1000)
+### for j in DELTA_RP3:
+###     DELTA_RP2 = [j] * 999
+###     print(np.trapz(Q_I)/FWK)
+###     if np.trapz(Q_I)/FWK >= 3:
+###         j+=10
+###         print(j)
+###     Q_I = np.linalg.solve(GFKT4, DELTA_RP2)
+###     if np.trapz(Q_I)/FWK <= 1.01 and np.trapz(Q_I)/FWK >= 0.99:
+###         break
+
+### While loop variante?
+### for j in range(len(DELTA_RP3)):
+###     DELTA_RP2 = [DELTA_RP3[j]] * 999
+###     Q_I = np.linalg.solve(GFKT4, DELTA_RP2)
+###     if np.trapz(Q_I)/FWK > 2:
+###         j+=50
+j=0
+while j < len(DELTA_RP3):
+    DELTA_RP2=[DELTA_RP3[j]] * 999
     Q_I = np.linalg.solve(GFKT4, DELTA_RP2)
+    if np.trapz(Q_I)/FWK > 2:
+        j+=100
+    if np.trapz(Q_I)/FWK > 1.5:
+        j+=5
+    if np.trapz(Q_I)/FWK > 1.05:
+        j+=1
+    j+=1
     if np.trapz(Q_I)/FWK <= 1.01 and np.trapz(Q_I)/FWK >= 0.99:
         break
+    print(np.trapz(Q_I)/FWK)
 ### Berechnen der realen Flaechenpressung einer einzelnen Scheibe
 SCH_PRESSUNG = Q_I/(2*B*(l/N))
 ### Graphen
-### FIGURE = plt.figure()
+### f= plt.figure()
+f, axes = plt.subplots(3, 1)
+axes[0].plot(DF[:,0], DF[:, 1])
+axes[0].set_ylabel('Verschleissprofil')
+axes[0].grid()
+axes[1].plot(DF[:, 0], Q_I)
+axes[1].set_ylabel('Kraefte einer Scheibe')
+axes[1].grid()
+
+axes[2].plot(DF[:,0], SCH_PRESSUNG)
+axes[2].set_ylabel('Pressung einer Scheibe')
+axes[2].grid()
 ### ax1 = FIGURE.add_subplot(111)
-### line = ax1.plot(Q_I, 'xr-', DF[:, 1], 'r--')
+### line1 = ax1.plot(Q_I, 'xr-', DF[:, 1], 'r--')
 ### ylabel("Kraft auf eine Scheibe")
-### ax2 = FIGURE.add_subplot(111, share=ax1, frameon=false)
+### ax2 = FIGURE.add_subplot(111, share=ax1)
 ### line2 = ax2.plot(SCH_PRESSUNG, 'g--')
 ### ax2.yaxis.tick_right()
 ### ax2.yaxis.set_label_position("right")
 ### ylabel("Flaechenpressung einer Scheibe")
 ### legend((line1, line2), ("Kraft / Verschleiss", "Flaechenpressung"))
-### show()
-### ax = plt.gca()
-### ax2 = ax.twinx()
-### ax2.set_ylabel("Flaechenpressung", color='blue')
-### ax.set_ylim(ymax=0.004)
-### ax.set_ylabel("Kraft / Verschleissprofil", color='red')
-### ax.plot(Q_I, 'r--', DF[:, 1], 'g--')
-### ax2.plot(SCH_PRESSUNG, 'b--')
-### show()
-###plt.plot(DF, DF, 'r--', DF, DF**2, 'bs', DF, DF**3, 'g^')
-### show()
+show()
