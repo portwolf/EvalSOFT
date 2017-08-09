@@ -120,17 +120,17 @@ DELTA_RP3 = linspace(max(DELTA_RP2), 0, num=1000)
 ###     Q_I = np.linalg.solve(GFKT4, DELTA_RP2)
 ###     if np.trapz(Q_I)/FWK > 2:
 ###         j+=50
-j=0
+j = 0
 while j < len(DELTA_RP3):
-    DELTA_RP2=[DELTA_RP3[j]] * 999
+    DELTA_RP2 = [DELTA_RP3[j]] * 999
     Q_I = np.linalg.solve(GFKT4, DELTA_RP2)
     if np.trapz(Q_I)/FWK > 2:
-        j+=100
+        j += 100
     if np.trapz(Q_I)/FWK > 1.5:
-        j+=5
+        j += 5
     if np.trapz(Q_I)/FWK > 1.05:
-        j+=1
-    j+=1
+        j += 1
+    j += 1
     if np.trapz(Q_I)/FWK <= 1.01 and np.trapz(Q_I)/FWK >= 0.99:
         break
     print(np.trapz(Q_I)/FWK)
