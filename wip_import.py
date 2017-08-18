@@ -77,7 +77,7 @@ for i in range(len(DF)):
 ###LOG_K21 = (N*(sum(np.log10(X0))*sum((np.log10(Y0))))-sum(np.log10(Y0))*sum(log10(X0)))
 ###K2 = LOG_K21/LOG_K12
 K2 = 1 / 0.92
-N = 1000
+N = 90
 ### Gewichtungsfunktionmatrix für j=k und j!=k erzeugen
 GFKT3 = np.zeros((999, 999))
 for i in range(len(GFKT)):
@@ -89,37 +89,31 @@ for i in range(len(GFKT)):
 #        elif j == i:
         else:
             GFKT3[i, j] = (4/l)**K2
-
 ### S_I berechnen (S_0 irrelevant, Axiallager). Aus Alternative Slicing Technique.. (Teutsch)
 C_I = 3.17*(WKRAD)**0.08*((1-QKZ**2)/EMOD)
 S_I = C_I**K2 / (l/N)
 GFKT4 = np.zeros((999, 999))
 GFKT4 = (N/sum(GFKT3))*S_I*GFKT3
 
-### DELTA_RP berechnen. Einfederung einer Rolle auf einer Scheibe (Startwert für spätere Iteration?)
+### DELTA_RP berechnen. Einfederung einer Scheibe auf einer Rolle (Startwert für spätere Iteration?)
 DELTA_RP = 2.66*(7**0.09) * (FWK*(1-0.3**2)/(2.08*10**5*10.6)**0.91)
 DELTA_RP2 = [DELTA_RP] * 999
 Q_I = np.zeros(999)
+
+### Berechnen der allgemeinen Kontur eines WK's anhand Messpunkte (Spalte 1 in Profilschrieb)
+
+i = 0
+WK_PROFIL = np.zeros(999)
+for i in range(len(DFREAD)):
+    WK_PROFIL[i] = 3.85*10**(-3)*np.log10(1/(1-(2*DF[i, 0]/WKLEN)**2))
+    print(WK_PROFIL[i])
+
 ### Lin. Gl. Sys loesen und einzelne Scheibenkraefte berechnen
-### Iteration von DELTA_RP (absenken der Einfederung Delta bis Integral der Kräfte der Scheiben der WK Einzelkraft entspricht
+### Iteration von DELTA_RP (absenken der Einfederung Delta bis Integral der
+### Kräfte der Scheiben der WK Einzelkraft entspricht
 
 DELTA_RP3 = linspace(max(DELTA_RP2), 0, num=1000)
-### for j in DELTA_RP3:
-###     DELTA_RP2 = [j] * 999
-###     print(np.trapz(Q_I)/FWK)
-###     if np.trapz(Q_I)/FWK >= 3:
-###         j+=10
-###         print(j)
-###     Q_I = np.linalg.solve(GFKT4, DELTA_RP2)
-###     if np.trapz(Q_I)/FWK <= 1.01 and np.trapz(Q_I)/FWK >= 0.99:
-###         break
 
-### While loop variante?
-### for j in range(len(DELTA_RP3)):
-###     DELTA_RP2 = [DELTA_RP3[j]] * 999
-###     Q_I = np.linalg.solve(GFKT4, DELTA_RP2)
-###     if np.trapz(Q_I)/FWK > 2:
-###         j+=50
 j = 0
 while j < len(DELTA_RP3):
     DELTA_RP2 = [DELTA_RP3[j]] * 999
@@ -139,14 +133,14 @@ SCH_PRESSUNG = Q_I/(2*B*(l/N))
 ### Graphen
 ### f= plt.figure()
 f, axes = plt.subplots(3, 1)
-axes[0].plot(DF[:,0], DF[:, 1])
+axes[0].plot(DF[:, 0], DF[:, 1], DF[:, 0], WK_PROFIL)
 axes[0].set_ylabel('Verschleissprofil')
 axes[0].grid()
 axes[1].plot(DF[:, 0], Q_I)
 axes[1].set_ylabel('Kraefte einer Scheibe')
 axes[1].grid()
 
-axes[2].plot(DF[:,0], SCH_PRESSUNG)
+axes[2].plot(DF[:, 0], SCH_PRESSUNG)
 axes[2].set_ylabel('Pressung einer Scheibe')
 axes[2].grid()
 ### ax1 = FIGURE.add_subplot(111)
