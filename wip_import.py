@@ -1,4 +1,5 @@
 ### Alle benoetigten Bibl. laden
+import threading
 import math
 import pandas as pd
 ### import pylab
@@ -133,7 +134,7 @@ SCH_PRESSUNG = Q_I/(2*B*(l/N))
 ### Graphen
 ### f= plt.figure()
 f, axes = plt.subplots(3, 1)
-axes[0].plot(DF[:, 0], DF[:, 1], DF[:, 0], WK_PROFIL)
+axes[0].plot(DF[:, 0], DF[:, 1], DF[:, 0], WK_PROFIL, DF[:, 0], DELTA_RP2)
 axes[0].set_ylabel('Verschleissprofil')
 axes[0].grid()
 axes[1].plot(DF[:, 0], Q_I)
@@ -143,6 +144,10 @@ axes[1].grid()
 axes[2].plot(DF[:, 0], SCH_PRESSUNG)
 axes[2].set_ylabel('Pressung einer Scheibe')
 axes[2].grid()
+#show()
+t = threading.Thread(target=show())
+t.start()
+savefig('foo.png')
 ### ax1 = FIGURE.add_subplot(111)
 ### line1 = ax1.plot(Q_I, 'xr-', DF[:, 1], 'r--')
 ### ylabel("Kraft auf eine Scheibe")
@@ -152,4 +157,3 @@ axes[2].grid()
 ### ax2.yaxis.set_label_position("right")
 ### ylabel("Flaechenpressung einer Scheibe")
 ### legend((line1, line2), ("Kraft / Verschleiss", "Flaechenpressung"))
-show()
