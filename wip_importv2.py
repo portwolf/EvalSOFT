@@ -17,7 +17,7 @@ QKZ = 0.3                                           ### Querkontraktionszahl
 WKRAD = 11/2                                        ### Waelzkoerperdurchmesser
 WKLEN = 10.6                                        ### Waelzkoerperlaenge
 RHO = (1/(WKRAD))                                   ### Konstante nach HERTZ
-l = 10.6 / 1000
+l = 10.6
 FGES = int(input('Gesamtlagerkraft? (In [kN]) '))   ### Lagergesamtlast
 ANZWK = int(input('Anzahl der Waelzkoerper? '))     ### Anzahl der Waelzkoerper im Lager
 FWK = round(((FGES*1000)/ANZWK), 2)                 ### Last auf einzelnen WK
@@ -37,20 +37,21 @@ DF = DFREAD.as_matrix()
 
 
 ### DELTA_RP berechnen. Einfederung einer Scheibe auf einer Rolle (Startwert für spätere Iteration?)
+### (0.0259)
 DELTA_RP = 2.66*(7**0.09) * (FWK*(1-0.3**2)/(2.08*10**5*10.6)**0.91)
-DELTA_RP2=np.zeros((shape(DF)))
-for c in range (len(DF)):
+### "Gesamtannaeherung" nach van der Sandt (0.0136)
+DEL_K = (3.97*(FWK**(9/10))) / ((1*10**5)*(l**(8/10)))
+DELTA_RP2 = np.zeros((shape(DF)))
+for c in range(len(DF)):
     for b in range(ndim(DF)):
         if  DF[c, 1] <= DELTA_RP:
             DELTA_RP2[c, b] = DF[c, b]
-        else:
-            DELTA_RP2[c, b] = 0
+        else: DELTA_RP2[c, b] = 0
 Q_I = np.zeros(len(DF))
 
 ### Berechnung der Tatsächlichen Kontaktlänge
 
 ### Einfederung nach van der Sandt (kleiner als nach Teutsch.. warum?)
-DEL_K = (3.97*(FWK**(9/10))) / ((1*10**5)*((l*1000)**(8/10)))
 DEL_K2 = np.zeros((shape(DF)))
 ### Berechnung des Profilabschnitts der tatsächlich in Kontakt mit mit Scheibe
 ### ist. Berechnung anhand von DEL_K (s.o.)
@@ -79,7 +80,7 @@ for i in range(len(DFREAD)):
 ### Ab hier neuer Code
 ''' Gewichtungsmatrix (reale Kontaktflaeche erzeugen und mit realen Abständen
 fuellen'''
-GEW_MTX = np.zeros((len(DEL_K2), len(DEL_K2)))
+GEW_MTX = np.zeros((len(DEL_K2), ndim(DEL_K2)))
 for i in range(len(DEL_K2)):
     for j in range(ndim(DEL_K2)):
         if DEL_K2[i, j] != NaN:
@@ -88,10 +89,14 @@ for i in range(len(DEL_K2)):
             GEW_MTX[i, j] = 0
 GEW_MTX2 = np.zeros((len(DEL_K2), len(DEL_K2)))
 
-### Initialisiere Gewichtungsfunktion Matrix
-GFKT = np.zeros((len(DF), len(DF)))
 
 ### Gewichtungsfunktionmatrix füllen (Abstände berechnen, reale)
+
+### Initialisiere Gewichtungsfunktion Matrix
+GFKT = np.zeros((len(DF), len(DF)))
+'''
+
+'''
 for i in range(len(DF)):
 
     for j in range(len(DF)):
@@ -105,9 +110,8 @@ N = 1000
 ### Gewichtungsfunktionmatrix füllen (Abstände berechnen, reale)
 GFKT2 = np.zeros((len(DF), len(DF)))
 for i in range(len(DF)):
-    if DEL_K2[i,1]!=0:
-        for j in range(len(DF)):
-            GFKT2[i, j] = abs(j-i)*l
+    for j in range(len(DF)):
+        GFKT2[i, j] = abs(j-i)*(l/N)
 ### Gewichtungsfunktionmatrix für j=k und j!=k erzeugen
 GFKT3 = np.zeros((len(DF), len(DF)))
 for i in range(len(GFKT)):
@@ -115,23 +119,23 @@ for i in range(len(GFKT)):
         if j != i:
             GFKT3[i, j] = (1/GFKT2[i, j])**K2
         else:
-            GFKT3[i, j] = (4/l)**K2
+            GFKT3[i, j] = (4/(l*1000))**K2
 ### S_I berechnen (S_0 irrelevant, Axiallager). Aus Alternative Slicing Technique.. (Teutsch)
 C_I = 3.17*(WKRAD)**0.08*((1-QKZ**2)/EMOD)
-S_I = C_I**K2 / (1000*l/N)
+S_I = C_I**K2 / (l/N)
 GFKT4 = np.zeros((len(DF), len(DF)))
 GFKT4 = (N/sum(GFKT3))*S_I*GFKT3
 
 j = 0
 while j < len(DELTA_RP2):
 ###    DELTA_RP2 = [DELTA_RP3[j]] * 999
-    Q_I = np.linalg.solve(GFKT4[nonzero[GFKT4]], DELTA_RP2[nonzero(DELTA_RP2)])
+    Q_I = np.linalg.solve(GFKT4, DELTA_RP2[:, 1])
     if np.trapz(Q_I)/FWK > 2:
-        j += 200
+        j += 2
     if np.trapz(Q_I)/FWK > 1.5:
-        j += 50
+        j += 5
     if np.trapz(Q_I)/FWK > 1.05:
-        j += 10
+        j += 1
     j += 1
     if np.trapz(Q_I)/FWK <= 1.01 and np.trapz(Q_I)/FWK >= 0.99:
         break
@@ -139,7 +143,7 @@ while j < len(DELTA_RP2):
     if np.trapz(Q_I)/FWK < 0.9:
         break
 ### Berechnen der realen Flaechenpressung einer einzelnen Scheibe
-SCH_PRESSUNG = Q_I/(2*B*(l/N))
+SCH_PRESSUNG = abs(Q_I)/(2*B*(l/N))
 
 ### Graphen
 f, AXES = plt.subplots(3, sharex=True)
@@ -160,5 +164,5 @@ AXES[2].set_ylabel('Pressung einer Scheibe')
 plt.legend(bbox_to_anchor=(0.9, 1), loc=2, borderaxespad=0.)
 AXES[2].grid()
 
-f.savefig('foo.png')
+f.savefig('foo.svg', format='svg')
 show()
