@@ -4,7 +4,7 @@
 from math import pi
 import math
 import numpy as np
-
+from dataImport import DF
 ### Definition verwendeter Konstanten
 E_R = (2.08e+05)                                    ### EModul Roller
 E_W = (2.08e+05)                                    ### EModul Washer
@@ -44,8 +44,14 @@ print('Die maximal Pressung im Kontakt betraegt: '+str(P0)+' N/mm^2')
 
 #########	HERTZ line contact	######################################
 #########	TEUTSCH page 149 and 150	##############################
+# pylint: disable=E1103
+DEL_1 = (2*FWK/(np.pi*L)) * (((1 - NUE_R**2)/E_R) * (np.log(2*WKRAD/B) - 1./2)
++ ((1. - NUE_W**2)/E_W) * (np.log(2*T_W/B) - NUE_W/2*(1 - NUE_W)))
+        #	Gl. 7.7
+# pylint: enable=E1103
 
-DEL_1 = (2*FWK/(np.pi*L)) * (((1 - NUE_R**2)/E_R) * (np.log(2*WKRAD/B) - 1./2) + ((1. - NUE_W**2)/E_W) * (np.log(2*T_W/B) - NUE_W/2*(1 - NUE_W)))   #	Gl. 7.7
+DEL_1 = DEL_1 - DF[:,1]
+DEL_1[DEL_1 < 0] = 0
 
 Y0 = (DEL_1*(1 + 2*WKRAD/WARAD))/T_W                                            #   Gl. 7.12.1
 X0 = (FWK*(1 + 2*WKRAD/WARAD))/(np.pi*E_RED*L*T_W)                              #   Gl. 7.12.1
@@ -89,6 +95,6 @@ l			=	L/n
 Q_r			=	np.linspace(0.1, 10e3, n)
 
 ###################################################################
-''' This Module calculates the Constants neccessary for later on calculations.
+''' This Module calculates the Constants necessary for later on calculations.
     Modules calculated with Hertz'ian theory for a cylindrical Roller
 '''

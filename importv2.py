@@ -14,8 +14,11 @@ from pylab import *
 ### from sklearn import datasets, linear_model
 ### import importlib
 ### Eigene "Module"
-from constants import *
+ST = time.time()
 from dataImport import DF
+from constants import *
+PT = round((time.time() - ST), 4)
+print('Konstanten berechnet / RAW Data import in '+str(PT)+' sec')
 ST = time.time()
 ### DELTA_RP berechnen. Einfederung einer Scheibe auf einer Rolle (Startwert für spätere Iteration?)
 ### (0.0259)
@@ -33,7 +36,7 @@ print('DELTA_RP2 erzeugt in '+str(PT)+' sec')
 Q_I = np.zeros(len(DF))
 
 ### Berechnung der Tatsächlichen Kontaktlänge
-ST
+ST = time.time()
 ### Einfederung nach van der Sandt (kleiner als nach Teutsch.. warum?)
 DEL_K2 = np.zeros((np.shape(DF)))
 ### Berechnung des Profilabschnitts der tatsächlich in Kontakt mit mit Scheibe
@@ -50,7 +53,7 @@ for c in range(len(DF)):
 PT = round((time.time() - ST), 4)
 print('DEL_K2 erzeugt in '+str(PT)+' sec')
 
-###ST
+ST = time.time()
 ### Berechnen der allgemeinen Kontur eines WK's anhand Messpunkte (Spalte 1 in Profilschrieb)
 i = 0
 WK_PROFIL = np.zeros(999)
@@ -80,7 +83,7 @@ print('WK_PROFIL erzeugt in '+str(PT)+' sec')
 
 
 ### Gewichtungsfunktionmatrix füllen (Abstände berechnen, reale)
-ST
+ST = time.time()
 ### Initialisiere Gewichtungsfunktion Matrix
 GFKT = np.zeros((len(DF), len(DF)))
 for i in range(len(DF)):
@@ -92,11 +95,11 @@ PT = round((time.time() - ST), 4)
 print('GFKT erzeugt in '+str(PT)+' sec')
 
 ### Faktor K2 -> quelle: FVA bericht / diss / teutsch?
-K2 = 1 / 0.92
+K2 = 1 / 0.91
 ### Anzahl der Scheiben in die der WK aufgeteilt wird
-N = 100
+N = 30
 
-ST
+ST = time.time()
 ### Gewichtungsfunktionmatrix füllen (Abstände berechnen, reale)
 GFKT2 = np.zeros((len(DF), len(DF)))
 for i in range(len(DF)):
@@ -104,15 +107,17 @@ for i in range(len(DF)):
         GFKT2[i, j] = abs(j-i)*(WKLEN/N)
 PT = round((time.time() - ST), 4)
 print('GFKT2 erzeugt in '+str(PT)+' sec')
-###ST
+ST = time.time()
 ### Gewichtungsfunktionmatrix für j=k und j!=k erzeugen
 GFKT3 = np.zeros((len(DF), len(DF)))
-for i in range(len(GFKT)):
-    for j in range(len(GFKT)):
-        if j != i:
-            GFKT3[i, j] = (1/GFKT2[i, j])**K2
-        else:
-            GFKT3[i, j] = (4/(WKLEN/1000))**K2
+### for i in range(len(DF)):
+###     for j in range(len(DF)):
+###         if j != i:
+###             GFKT3[i, j] = (1/GFKT2[i, j])**K2
+###         else:
+###             GFKT3[i, j] = (4/(WKLEN/1000))**K2
+GFKT3 = (1/GFKT2)**K2
+np.fill_diagonal(GFKT3, (4/(WKLEN/1000))**K2)
 PT = round((time.time() - ST), 4)
 print('GFKT3 erzeugt in '+str(PT)+' sec')
 
@@ -120,7 +125,7 @@ print('GFKT3 erzeugt in '+str(PT)+' sec')
 C_I = 3.17*(WKRAD)**0.08*((1-NUE_R**2)/E_R)**(1/K2)
 S_I = C_I**K2 / (WKLEN/N)
 
-###ST
+ST = time.time()
 GFKT4 = np.zeros((len(DF), len(DF)))
 GFKT4 = (N/sum(GFKT3))*S_I*GFKT3
 
@@ -130,11 +135,12 @@ print('GFKT4 erzeugt in '+str(PT)+' sec')
 ### DELTA_RP2 Vektor erzeugen. Berechnete einfederung linear bis 0 absenken
 DEL_K3 = DEL_K - DF[:, 1]
 DEL_K3[DEL_K3 < 0] = 0
+GFKT4[DEL_K3 < 0, :] = 0
 Q_I = np.linalg.solve(GFKT4, (DEL_K3)**K2)
 ### Reale Kraft Q_I auf eine Scheibe berechnen
 while np.trapz(Q_I)/FWK > 1.01:
     if np.trapz(Q_I)/FWK > 1.5:
-        DEL_K3 = DEL_K3*0.8
+        DEL_K3 = DEL_K3*0.5
         Q_I = np.linalg.solve(GFKT4, (DEL_K3)**K2)
     if np.trapz(Q_I)/FWK > 1.01:
         DEL_K3 = DEL_K3*0.9
@@ -143,11 +149,15 @@ while np.trapz(Q_I)/FWK > 1.01:
             DEL_K3 = DEL_K3*1.1
             Q_I = np.linalg.solve(GFKT4, (DEL_K3)**K2)
     print(np.trapz(Q_I)/FWK)
+### Negative Anteile von Q_I zu Null setzen
+Q_I[Q_I < 0] = 0
+### Neue Kontaktbreite fuer jede Scheibe berechnen
+B_I = np.sqrt(8*Q_I/(np.pi*E_RED*R_RED*L))
 ### Berechnen der realen Flaechenpressung einer einzelnen Scheibe
-SCH_PRESSUNG = 2*Q_I/(np.pi*B*(WKLEN/N))
+SCH_PRESSUNG = 2*Q_I/(np.pi*2*B_I*(WKLEN/N))
 
 ### Graphen
-f, AXES = plt.subplots(3, sharex=True)
+F, AXES = plt.subplots(3, sharex=True)
 AXES[0].plot(DF[:, 0], DF[:, 1], label='Gemessenes Profil')
 AXES[0].plot(DF[:, 0], WK_PROFIL, label='Berechnetes WK Profil')
 AXES[0].plot(DF[:, 0], DELTA_RP2[:, 1], label='Einfederung nach Teutsch')
@@ -165,5 +175,5 @@ AXES[2].set_ylabel('Pressung einer Scheibe')
 plt.legend(bbox_to_anchor=(0.9, 1), loc=2, borderaxespad=0.)
 AXES[2].grid()
 
-f.savefig('foo.svg', type='svg')
+F.savefig('foo.svg', type='svg')
 show()
